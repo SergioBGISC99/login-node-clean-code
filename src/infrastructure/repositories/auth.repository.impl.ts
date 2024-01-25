@@ -1,7 +1,9 @@
-import { RegisterUserDto } from "../../domain/dtos";
-import { UserEntity } from "../../domain/entities";
-import { AuthRepository } from "../../domain/repositories/auth.repository";
-import { AuthDatasource } from "../../domain/datasources/auth.datasource";
+import {
+  AuthDatasource,
+  AuthRepository,
+  RegisterUserDto,
+  UserEntity,
+} from "../../domain";
 
 export class AuthRepositoryImpl implements AuthRepository {
   constructor(private readonly authDatasource: AuthDatasource) {}
