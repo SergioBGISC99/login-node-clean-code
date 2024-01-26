@@ -3,6 +3,7 @@ import { UserModel } from "../../data/mongodb";
 import {
   AuthDatasource,
   CustomError,
+  LoginUserDto,
   RegisterUserDto,
   UserEntity,
 } from "../../domain";
@@ -16,6 +17,26 @@ export class AuthDatasourceImpl implements AuthDatasource {
     private readonly hashPassword: HashFunction = BcryptAdapter.hash,
     private readonly comparePassword: CompareFunction = BcryptAdapter.compare
   ) {}
+
+  async login(loginUserDto: LoginUserDto): Promise<UserEntity> {
+    const { email, password } = loginUserDto;
+
+    try {
+      const userExist = await UserModel.findOne({ email });
+      if (!userExist) throw CustomError.badRequest("User does not exist");
+
+      const validPassword = this.comparePassword(password, userExist.password);
+
+      if (!validPassword) throw CustomError.badRequest("Invalid password");
+
+      return UserMapper.userEntityFromObject(userExist);
+    } catch (error) {
+      if (error instanceof CustomError) {
+        throw error;
+      }
+      throw CustomError.internalServer();
+    }
+  }
 
   async register(registerUserDto: RegisterUserDto): Promise<UserEntity> {
     const { name, email, password } = registerUserDto;
@@ -36,11 +57,10 @@ export class AuthDatasourceImpl implements AuthDatasource {
         email: email,
         password: hashedPassword,
       });
-      const userMapped = UserMapper.userEntityFromObject(user);
 
       // 4. Guardar en base de datos
       await user.save();
-      return userMapped;
+      return UserMapper.userEntityFromObject(user);
     } catch (error) {
       if (error instanceof CustomError) {
         throw error;
